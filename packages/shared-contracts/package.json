@@ -1,0 +1,12 @@
+{
+  "name": "@collab-notes/shared-contracts",
+  "version": "1.0.0",
+  "description": "Shared NATS event contracts, DTOs, and type interfaces",
+  "main": "src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

@@ -1,0 +1,73 @@
+<header class="h-14 flex items-center justify-between px-4 border-b border-border/50 bg-background/80 backdrop-blur-sm">
+  <div class="flex items-center gap-2">
+    <button class="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors" title="Toggle Sidebar">
+      <lucide-angular [img]="MenuIcon" class="w-5 h-5"></lucide-angular>
+    </button>
+    
+    <!-- Breadcrumbs -->
+    <div class="flex items-center text-sm ml-2 hidden sm:flex" *ngIf="activeNote()">
+      <span class="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">{{ user()?.displayName || 'User' }}</span>
+      <span class="mx-2 text-muted-foreground">/</span>
+      <span class="font-medium text-foreground">{{ activeNote()?.title || 'Untitled' }}</span>
+    </div>
+  </div>
+
+  <div class="flex items-center gap-2">
+    <!-- Presence / Avatars -->
+    <div class="hidden sm:flex items-center -space-x-2 mr-4" *ngIf="activeUsers().length > 0">
+      <div *ngFor="let u of activeUsers() | slice:0:3; let i = index" 
+           class="w-7 h-7 rounded-full border-2 border-background flex items-center justify-center text-xs font-bold text-white bg-blue-500 z-{{30 - i*10}}"
+           [title]="'User ' + u.userId">
+        {{ u.userId.substring(0, 1) | uppercase }}
+      </div>
+      <div *ngIf="activeUsers().length > 3" class="w-7 h-7 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold z-10">
+        +{{ activeUsers().length - 3 }}
+      </div>
+    </div>
+
+    <span class="text-xs text-muted-foreground px-2 py-1 bg-muted rounded hidden sm:block mr-2" *ngIf="activeNote()">
+      Updated recently
+    </span>
+    
+    <button (click)="openShareModal()" class="px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground rounded-md shadow-sm hover:bg-primary/90 transition-colors flex items-center gap-1">
+      <lucide-angular [img]="Share2Icon" class="w-4 h-4"></lucide-angular>
+      Share
+    </button>
+    
+    <app-notifications></app-notifications>
+
+    <button (click)="toggleTheme()" class="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors ml-1" [title]="isDarkMode() ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+      <lucide-angular *ngIf="isDarkMode()" [img]="SunIcon" class="w-5 h-5"></lucide-angular>
+      <lucide-angular *ngIf="!isDarkMode()" [img]="MoonIcon" class="w-5 h-5"></lucide-angular>
+    </button>
+  </div>
+</header>
+
+<!-- Share Modal -->
+<div *ngIf="isShareModalOpen()" class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-md rounded-xl border border-border shadow-2xl overflow-hidden">
+    <div class="px-4 py-3 border-b border-border flex items-center justify-between bg-muted/30">
+      <h3 class="font-semibold text-foreground">Share Note</h3>
+      <button (click)="closeShareModal()" class="text-muted-foreground hover:text-foreground">
+        <lucide-angular [img]="XIcon" class="w-4 h-4"></lucide-angular>
+      </button>
+    </div>
+    <div class="p-4 space-y-4">
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">User ID</label>
+        <input type="text" [(ngModel)]="shareUserId" placeholder="Enter user ID..." class="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground" />
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-foreground mb-1">Permission</label>
+        <select [(ngModel)]="sharePermission" class="w-full bg-background border border-border rounded-md px-3 py-2 text-sm focus:outline-none focus:border-primary text-foreground appearance-none">
+          <option value="VIEWER">Viewer</option>
+          <option value="EDITOR">Editor</option>
+        </select>
+      </div>
+    </div>
+    <div class="px-4 py-3 border-t border-border bg-muted/30 flex justify-end gap-2">
+      <button (click)="closeShareModal()" class="px-3 py-1.5 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted transition-colors">Cancel</button>
+      <button (click)="shareNote()" [disabled]="!shareUserId" class="px-3 py-1.5 text-sm font-medium text-primary-foreground bg-primary rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50">Share</button>
+    </div>
+  </div>
+</div>

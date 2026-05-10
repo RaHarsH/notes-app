@@ -1,0 +1,19 @@
+import { Routes } from '@angular/router';
+import { authGuard } from './guards/auth.guard';
+import { DashboardComponent } from './components/dashboard/dashboard';
+import { LoginComponent } from './components/auth/login/login';
+import { SignupComponent } from './components/auth/signup/signup';
+
+export const routes: Routes = [
+  { path: 'login', component: LoginComponent },
+  { path: 'signup', component: SignupComponent },
+  { 
+    path: '', 
+    component: DashboardComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: 'note/:id', loadComponent: () => import('./components/editor/editor').then(m => m.EditorComponent) }
+    ]
+  },
+  { path: '**', redirectTo: '' }
+];

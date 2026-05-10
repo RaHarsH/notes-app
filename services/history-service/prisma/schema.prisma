@@ -1,0 +1,22 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model NoteRevision {
+  id            String   @id @default(uuid())
+  noteId        String
+  authorId      String
+  content       String   // full TipTap JSON snapshot
+  changeSummary String?
+  version       Int
+  createdAt     DateTime @default(now())
+
+  @@unique([noteId, version])
+  @@index([noteId])
+  @@map("note_revisions")
+}

@@ -1,0 +1,39 @@
+<div class="relative">
+  <button (click)="toggleDropdown()" class="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors relative" title="Notifications">
+    <lucide-angular [img]="BellIcon" class="w-5 h-5"></lucide-angular>
+    <span *ngIf="unreadCount() > 0" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+  </button>
+
+  <!-- Dropdown Panel -->
+  <div *ngIf="isOpen()" class="absolute right-0 mt-2 w-80 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50">
+    <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
+      <h3 class="font-semibold text-sm text-foreground">Notifications</h3>
+      <button *ngIf="unreadCount() > 0" (click)="markAllAsRead()" class="text-xs text-primary hover:underline">Mark all as read</button>
+    </div>
+    
+    <div class="max-h-96 overflow-y-auto">
+      <div *ngIf="notifications().length === 0" class="p-4 text-center text-sm text-muted-foreground">
+        No notifications yet.
+      </div>
+      
+      <div *ngFor="let notif of notifications()" 
+           class="p-4 border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
+           [class.bg-primary]="!notif.read"
+           [class.bg-opacity-5]="!notif.read"
+           (click)="onNotificationClick(notif)">
+        <div class="flex gap-3">
+          <div class="mt-1 flex-shrink-0">
+            <lucide-angular *ngIf="notif.type === 'COMMENT'" [img]="MessageCircleIcon" class="w-4 h-4 text-blue-500"></lucide-angular>
+            <lucide-angular *ngIf="notif.type === 'SHARE'" [img]="ShareIcon" class="w-4 h-4 text-green-500"></lucide-angular>
+            <lucide-angular *ngIf="notif.type !== 'COMMENT' && notif.type !== 'SHARE'" [img]="BellIcon" class="w-4 h-4 text-muted-foreground"></lucide-angular>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-foreground" [class.font-semibold]="!notif.read">{{ notif.title }}</p>
+            <p class="text-xs text-muted-foreground mt-1">{{ notif.message }}</p>
+            <p class="text-[10px] text-muted-foreground/60 mt-2 uppercase">{{ notif.createdAt | date:'short' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,75 @@
+<div class="flex h-full w-full relative overflow-hidden">
+  
+  <div *ngIf="loading()" class="absolute inset-0 flex items-center justify-center bg-background/80 z-50">
+    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  </div>
+
+  <div class="flex-1 overflow-y-auto px-8 sm:px-12 py-12 lg:py-16 transition-all" [class.mr-80]="isCommentsOpen()">
+    <div class="max-w-4xl mx-auto">
+      <!-- Document Title -->
+      <input 
+        type="text" 
+        class="w-full text-4xl sm:text-5xl font-bold mb-4 text-foreground tracking-tight outline-none bg-transparent placeholder:text-muted-foreground/30" 
+        [ngModel]="note()?.title" 
+        (ngModelChange)="onTitleChange($event)"
+        placeholder="Untitled"
+      />
+
+      <!-- Active Users Presence Banner -->
+      <div *ngIf="collabService.activeUsers().length > 1" class="flex items-center gap-2 mb-8 text-xs text-muted-foreground bg-muted/30 w-max px-3 py-1.5 rounded-full border border-border/50 shadow-sm animate-in fade-in zoom-in duration-300">
+        <div class="flex -space-x-1.5">
+          <div *ngFor="let u of collabService.activeUsers() | slice:0:3; let i = index" 
+               class="w-5 h-5 rounded-full border border-background flex items-center justify-center text-[8px] font-bold text-white bg-green-500"
+               [style.z-index]="30 - i*10"
+               [title]="'User ' + u.userId">
+            {{ u.userId.substring(0, 1) | uppercase }}
+          </div>
+        </div>
+        <span>{{ collabService.activeUsers().length - 1 }} other {{ collabService.activeUsers().length - 1 === 1 ? 'person is' : 'people are' }} here</span>
+        <span class="relative flex h-2 w-2 ml-1">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+        </span>
+      </div>
+      <div *ngIf="collabService.activeUsers().length <= 1" class="mb-8"></div>
+      
+      <!-- Editor Content -->
+      <div class="prose prose-slate dark:prose-invert max-w-none prose-lg">
+        <textarea
+          class="w-full min-h-[500px] resize-none outline-none bg-transparent text-foreground/90 leading-relaxed"
+          [ngModel]="note()?.content"
+          (ngModelChange)="onContentChange($event)"
+          (keyup)="updateCursor($event.target)"
+          (click)="updateCursor($event.target)"
+          placeholder="Start writing..."
+        ></textarea>
+      </div>
+      
+      <div class="h-64 mt-8 flex items-start text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors cursor-text group" contenteditable="true">
+        <span class="opacity-0 group-hover:opacity-100 transition-opacity">Click here to continue writing...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comments Sidebar Component -->
+  <app-comments 
+    *ngIf="noteId" 
+    [noteId]="noteId" 
+    [isOpen]="isCommentsOpen"
+    class="flex-shrink-0 z-40 border-l border-border h-full bg-background absolute right-0 top-0 bottom-0 transition-transform duration-300"
+    [class.translate-x-full]="!isCommentsOpen()">
+  </app-comments>
+
+  <div *ngIf="saving()" class="fixed bottom-4 right-4 text-xs text-muted-foreground bg-muted px-2 py-1 rounded z-50">
+    Saving...
+  </div>
+
+  <!-- Floating Comments Toggle -->
+  <button 
+    *ngIf="!isCommentsOpen()"
+    (click)="toggleComments()"
+    class="fixed right-4 top-20 p-3 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-transform hover:scale-105 z-50"
+    title="Open Comments">
+    <lucide-angular [img]="MessageSquareIcon" class="w-5 h-5"></lucide-angular>
+  </button>
+</div>

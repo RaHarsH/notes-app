@@ -1,0 +1,80 @@
+<aside 
+  class="flex-shrink-0 flex flex-col h-full bg-muted/30 border-r border-border transition-all duration-300 ease-in-out"
+  [class.w-64]="isOpen()"
+  [class.w-0]="!isOpen()"
+  [class.opacity-0]="!isOpen()">
+  
+  <div class="flex-1 overflow-y-auto px-3 py-4 w-64">
+    <!-- Profile Area -->
+    <div class="flex items-center gap-3 px-2 py-3 mb-6 rounded-lg hover:bg-muted cursor-pointer transition-colors" *ngIf="user()">
+      <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+        {{ user()?.displayName?.charAt(0) || user()?.email?.charAt(0) | uppercase }}
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-semibold truncate">{{ user()?.displayName || 'User' }}</p>
+        <p class="text-xs text-muted-foreground truncate">{{ user()?.email }}</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="space-y-1 mb-6">
+      <div class="relative w-full">
+        <lucide-angular [img]="SearchIcon" class="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground"></lucide-angular>
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search notes..." 
+          class="w-full pl-8 pr-2 py-2 text-sm font-medium rounded-md bg-muted text-foreground border border-transparent focus:border-border focus:outline-none transition-colors"
+        />
+      </div>
+      <button class="w-full flex items-center gap-3 px-2 py-2 text-sm font-medium rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors group" (click)="createNewNote()">
+        <lucide-angular [img]="PlusIcon" class="w-4 h-4 group-hover:text-primary transition-colors"></lucide-angular>
+        New Note
+      </button>
+    </div>
+
+    <!-- Notes List -->
+    <div class="space-y-1">
+      <div class="px-2 py-1 flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+        <span>Private Notes</span>
+        <button class="hover:bg-muted rounded p-0.5 transition-colors" (click)="createNewNote()">
+          <lucide-angular [img]="PlusIcon" class="w-3 h-3"></lucide-angular>
+        </button>
+      </div>
+      
+      <div *ngIf="filteredNotes().length === 0" class="px-2 py-3 text-xs text-muted-foreground text-center">
+        No notes found.
+      </div>
+      
+      <div *ngFor="let note of filteredNotes()" 
+           class="w-full flex items-center justify-between px-2 py-1.5 text-sm rounded-md transition-colors group cursor-pointer"
+           [class.bg-muted]="activeNote()?.id === note.id"
+           [class.text-foreground]="activeNote()?.id === note.id"
+           [class.font-medium]="activeNote()?.id === note.id"
+           [class.text-muted-foreground]="activeNote()?.id !== note.id"
+           [class.hover:bg-muted]="activeNote()?.id !== note.id"
+           (click)="openNote(note.id)">
+        <div class="flex items-center gap-2 overflow-hidden">
+          <lucide-angular [img]="ChevronRightIcon" class="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" [class.opacity-100]="activeNote()?.id === note.id"></lucide-angular>
+          <lucide-angular [img]="FileTextIcon" class="w-4 h-4 flex-shrink-0"></lucide-angular>
+          <span class="truncate">{{ note.title || 'Untitled' }}</span>
+        </div>
+        <button 
+          (click)="deleteNote(note.id, $event)"
+          class="opacity-0 group-hover:opacity-100 p-1 hover:text-red-400 transition-opacity"
+          title="Delete Note">
+          <lucide-angular [img]="Trash2Icon" class="w-3.5 h-3.5"></lucide-angular>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Actions -->
+  <div class="p-3 w-64 border-t border-border mt-auto">
+    <button (click)="logout()" class="w-full flex items-center gap-3 px-2 py-2 text-sm font-medium rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors">
+      <lucide-angular [img]="LogOutIcon" class="w-4 h-4"></lucide-angular>
+      Logout
+    </button>
+  </div>
+</aside>

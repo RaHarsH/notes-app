@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum CommentStatus {
+  OPEN
+  RESOLVED
+}
+
+model CommentThread {
+  id        String        @id @default(uuid())
+  noteId    String
+  anchorId  String        // TipTap mark/position reference
+  status    CommentStatus @default(OPEN)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  comments  Comment[]
+
+  @@index([noteId])
+  @@map("comment_threads")
+}
+
+model Comment {
+  id        String        @id @default(uuid())
+  threadId  String
+  authorId  String
+  content   String
+  mentions  String[]      // array of userId strings
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  thread    CommentThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
+
+  @@index([threadId])
+  @@map("comments")
+}

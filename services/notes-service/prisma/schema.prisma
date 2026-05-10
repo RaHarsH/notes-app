@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum NotePermission {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+model Note {
+  id          String   @id @default(uuid())
+  title       String
+  content     String   @default("{}")  // TipTap JSON document
+  ownerId     String
+  isPublic    Boolean  @default(false)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  collaborators NoteCollaborator[]
+
+  @@index([ownerId])
+  @@map("notes")
+}
+
+model NoteCollaborator {
+  id         String         @id @default(uuid())
+  noteId     String
+  userId     String
+  permission NotePermission @default(VIEWER)
+  addedAt    DateTime       @default(now())
+
+  note       Note           @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@unique([noteId, userId])
+  @@index([noteId])
+  @@index([userId])
+  @@map("note_collaborators")
+}

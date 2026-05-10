@@ -1,0 +1,20 @@
+{
+  "name": "collab-notes",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "docker compose up --build",
+    "down": "docker compose down -v",
+    "prisma:generate": "npm run prisma:generate --workspaces --if-present",
+    "prisma:migrate": "npm run prisma:migrate --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}
