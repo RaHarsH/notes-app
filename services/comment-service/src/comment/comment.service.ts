@@ -89,4 +89,35 @@ export class CommentService {
     this.natsClient.emit('comment.resolved', { threadId: data.threadId, noteId: thread.noteId, resolvedById: data.userId });
     return thread;
   }
+
+  async updateThread(data: { threadId: string; content: string; userId: string }) {
+    // In our simplified model, the thread text is driven by the first comment
+    const thread = await this.prisma.commentThread.findUnique({
+      where: { id: data.threadId },
+      include: { comments: { orderBy: { createdAt: 'asc' }, take: 1 } },
+    });
+    if (!thread || !thread.comments[0]) return null;
+
+    const updatedComment = await this.prisma.comment.update({
+      where: { id: thread.comments[0].id },
+      data: { content: data.content },
+    });
+
+    this.natsClient.emit('comment.updated', { threadId: data.threadId, noteId: thread.noteId, content: data.content, updatedById: data.userId });
+
+    return { ...thread, comments: [updatedComment] };
+  }
+
+  async deleteThread(data: { threadId: string; userId: string }) {
+    const thread = await this.prisma.commentThread.findUnique({ where: { id: data.threadId } });
+    await this.prisma.commentThread.delete({
+      where: { id: data.threadId },
+    });
+    
+    if (thread) {
+      this.natsClient.emit('comment.deleted', { threadId: data.threadId, noteId: thread.noteId, deletedById: data.userId });
+    }
+    
+    return { success: true };
+  }
 }

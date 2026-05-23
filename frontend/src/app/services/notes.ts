@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap, map } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Note } from '../models';
+import { CollaborationService } from './collaboration';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,13 @@ export class NotesService {
   notes = signal<Note[]>([]);
   activeNote = signal<Note | null>(null);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private collabService: CollaborationService) {
+    this.collabService.globalNotifications.subscribe((data) => {
+      if (data && data.type === 'NOTE_SHARED') {
+        this.getNotes().subscribe();
+      }
+    });
+  }
 
   getNotes(): Observable<Note[]> {
     return this.http.get<{notes: Note[], total: number}>(this.API_URL).pipe(

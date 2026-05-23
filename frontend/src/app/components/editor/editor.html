@@ -21,8 +21,8 @@
           <div *ngFor="let u of collabService.activeUsers() | slice:0:3; let i = index" 
                class="w-5 h-5 rounded-full border border-background flex items-center justify-center text-[8px] font-bold text-white bg-green-500"
                [style.z-index]="30 - i*10"
-               [title]="'User ' + u.userId">
-            {{ u.userId.substring(0, 1) | uppercase }}
+               [title]="u.email ? u.email : 'User ' + u.userId">
+            {{ (u.email ? u.email : u.userId).substring(0, 1) | uppercase }}
           </div>
         </div>
         <span>{{ collabService.activeUsers().length - 1 }} other {{ collabService.activeUsers().length - 1 === 1 ? 'person is' : 'people are' }} here</span>
@@ -34,15 +34,28 @@
       <div *ngIf="collabService.activeUsers().length <= 1" class="mb-8"></div>
       
       <!-- Editor Content -->
-      <div class="prose prose-slate dark:prose-invert max-w-none prose-lg">
+      <div class="prose prose-slate dark:prose-invert max-w-none prose-lg relative">
         <textarea
-          class="w-full min-h-[500px] resize-none outline-none bg-transparent text-foreground/90 leading-relaxed"
+          #editorTextarea
+          class="w-full min-h-[500px] resize-none outline-none bg-transparent text-foreground/90 leading-relaxed z-10 relative bg-transparent"
           [ngModel]="note()?.content"
           (ngModelChange)="onContentChange($event)"
           (keyup)="updateCursor($event.target)"
           (click)="updateCursor($event.target)"
           placeholder="Start writing..."
         ></textarea>
+
+        <!-- Floating Cursors Overlay -->
+        <div *ngFor="let cursor of otherCursors()" 
+             class="absolute pointer-events-none z-20 flex flex-col items-start transition-all duration-100 ease-linear"
+             [style.top.px]="cursor.top" 
+             [style.left.px]="cursor.left">
+          <div class="w-0.5 h-5" [style.background-color]="cursor.color"></div>
+          <div class="text-[10px] text-white px-1 py-0.5 rounded shadow-sm whitespace-nowrap mt-0.5 -ml-1 flex items-center" 
+               [style.background-color]="cursor.color">
+            {{ cursor.email ? cursor.email.split('@')[0] : cursor.userId.substring(0, 4) }}
+          </div>
+        </div>
       </div>
       
       <div class="h-64 mt-8 flex items-start text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors cursor-text group" contenteditable="true">

@@ -1,0 +1,63 @@
+<div class="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-foreground">Notifications</h1>
+      <p class="text-muted-foreground mt-1">Stay updated with your latest activities and collaborations.</p>
+    </div>
+    <button (click)="markAllAsRead()" class="px-4 py-2 text-sm font-medium bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors flex items-center gap-2">
+      <lucide-angular [img]="CheckCircleIcon" class="w-4 h-4"></lucide-angular>
+      Mark all as read
+    </button>
+  </div>
+
+  <div class="bg-card shadow rounded-xl border border-border overflow-hidden">
+    <div *ngIf="notifications().length === 0" class="p-8 text-center text-muted-foreground">
+      <lucide-angular [img]="BellIcon" class="w-12 h-12 mx-auto mb-4 opacity-20"></lucide-angular>
+      <p>You're all caught up! No notifications yet.</p>
+    </div>
+
+    <div class="divide-y divide-border">
+      <div *ngFor="let notif of displayNotifications()"
+           class="p-6 flex gap-4 transition-colors hover:bg-muted/10"
+           [class.bg-primary]="!notif.read"
+           [class.bg-opacity-5]="!notif.read">
+
+        <div class="mt-1 flex-shrink-0">
+          <div class="w-10 h-10 rounded-full flex items-center justify-center"
+               [class.bg-blue-100]="notif.type.includes('COMMENT') || notif.type === 'MENTION'"
+               [class.text-blue-600]="notif.type.includes('COMMENT') || notif.type === 'MENTION'"
+               [class.bg-green-100]="notif.type.includes('SHARE')"
+               [class.text-green-600]="notif.type.includes('SHARE')"
+               [class.bg-gray-100]="!notif.type.includes('COMMENT') && !notif.type.includes('SHARE') && notif.type !== 'MENTION'"
+               [class.text-gray-600]="!notif.type.includes('COMMENT') && !notif.type.includes('SHARE') && notif.type !== 'MENTION'">
+            <lucide-angular *ngIf="notif.type.includes('COMMENT') || notif.type === 'MENTION'" [img]="MessageCircleIcon" class="w-5 h-5"></lucide-angular>
+            <lucide-angular *ngIf="notif.type.includes('SHARE')" [img]="ShareIcon" class="w-5 h-5"></lucide-angular>
+            <lucide-angular *ngIf="!notif.type.includes('COMMENT') && !notif.type.includes('SHARE') && notif.type !== 'MENTION'" [img]="BellIcon" class="w-5 h-5"></lucide-angular>
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <div class="flex justify-between items-start">
+            <h4 class="text-base font-medium text-foreground" [class.font-bold]="!notif.read">{{ notif.title }}</h4>
+            <span class="text-xs text-muted-foreground whitespace-nowrap ml-4">{{ notif.createdAt | date:'medium' }}</span>
+          </div>
+          <p class="mt-1 text-sm text-muted-foreground">{{ notif.message }}</p>
+
+          <div class="mt-3 flex items-center gap-4" *ngIf="!notif.read">
+            <button (click)="markAsRead(notif.id)" class="text-xs font-medium text-primary hover:underline">
+              Mark as read
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Load More -->
+    <div *ngIf="notifications().length > displayLimit()" class="p-4 border-t border-border bg-muted/30 flex justify-center">
+      <button (click)="loadMore()" class="px-6 py-2 bg-background border border-border text-foreground font-medium rounded-md hover:bg-muted transition-colors text-sm">
+        Load More Notifications
+      </button>
+    </div>
+  </div>
+</div>

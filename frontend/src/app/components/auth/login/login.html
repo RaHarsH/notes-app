@@ -16,9 +16,13 @@
           <label for="email-address" class="sr-only">Email address</label>
           <input id="email-address" name="email" type="email" [(ngModel)]="email" required class="appearance-none rounded-md relative block w-full px-3 py-2 border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="Email address">
         </div>
-        <div>
+        <div class="relative">
           <label for="password" class="sr-only">Password</label>
-          <input id="password" name="password" type="password" [(ngModel)]="password" required class="appearance-none rounded-md relative block w-full px-3 py-2 border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm" placeholder="Password">
+          <input id="password" name="password" [type]="showPassword() ? 'text' : 'password'" [(ngModel)]="password" required class="appearance-none rounded-md relative block w-full px-3 py-2 border border-border bg-background text-foreground placeholder-muted-foreground focus:outline-none focus:ring-primary focus:border-primary sm:text-sm pr-10" placeholder="Password">
+          <button type="button" (click)="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground hover:text-foreground transition-colors" tabindex="-1">
+            <lucide-angular *ngIf="!showPassword()" [img]="EyeIcon" class="w-4 h-4"></lucide-angular>
+            <lucide-angular *ngIf="showPassword()" [img]="EyeOffIcon" class="w-4 h-4"></lucide-angular>
+          </button>
         </div>
       </div>
 

@@ -5,10 +5,10 @@
   </button>
 
   <!-- Dropdown Panel -->
-  <div *ngIf="isOpen()" class="absolute right-0 mt-2 w-80 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50">
-    <div class="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/30">
-      <h3 class="font-semibold text-sm text-foreground">Notifications</h3>
-      <button *ngIf="unreadCount() > 0" (click)="markAllAsRead()" class="text-xs text-primary hover:underline">Mark all as read</button>
+  <div *ngIf="isOpen()" class="absolute right-0 mt-2 w-[350px] bg-card border border-border rounded-xl shadow-2xl overflow-hidden z-50 transition-all duration-200 origin-top-right transform scale-100 opacity-100">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-border bg-gradient-to-b from-muted/50 to-transparent">
+      <h3 class="font-bold text-sm text-foreground tracking-tight">Notifications</h3>
+      <button *ngIf="unreadCount() > 0" (click)="markAllAsRead()" class="text-xs font-medium text-primary hover:text-primary/80 transition-colors">Mark all as read</button>
     </div>
     
     <div class="max-h-96 overflow-y-auto">
@@ -16,24 +16,41 @@
         No notifications yet.
       </div>
       
-      <div *ngFor="let notif of notifications()" 
-           class="p-4 border-b border-border/50 hover:bg-muted/30 transition-colors cursor-pointer"
-           [class.bg-primary]="!notif.read"
-           [class.bg-opacity-5]="!notif.read"
+      <div *ngFor="let notif of displayNotifications()" 
+           class="p-4 border-b border-border/40 hover:bg-muted/50 transition-colors cursor-pointer group relative"
+           [class.bg-muted]="!notif.read"
+           [class.bg-opacity-20]="!notif.read"
            (click)="onNotificationClick(notif)">
-        <div class="flex gap-3">
-          <div class="mt-1 flex-shrink-0">
-            <lucide-angular *ngIf="notif.type === 'COMMENT'" [img]="MessageCircleIcon" class="w-4 h-4 text-blue-500"></lucide-angular>
-            <lucide-angular *ngIf="notif.type === 'SHARE'" [img]="ShareIcon" class="w-4 h-4 text-green-500"></lucide-angular>
-            <lucide-angular *ngIf="notif.type !== 'COMMENT' && notif.type !== 'SHARE'" [img]="BellIcon" class="w-4 h-4 text-muted-foreground"></lucide-angular>
+        
+        <!-- Unread Indicator Dot -->
+        <div *ngIf="!notif.read" class="absolute left-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary"></div>
+        
+        <div class="flex gap-4 pl-2">
+          <div class="mt-0.5 flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
+               [class.bg-blue-500]="notif.type.includes('COMMENT') || notif.type === 'MENTION'"
+               [class.bg-green-500]="notif.type.includes('SHARE')"
+               [class.bg-muted]="!notif.type.includes('COMMENT') && !notif.type.includes('SHARE') && notif.type !== 'MENTION'">
+            <lucide-angular *ngIf="notif.type.includes('COMMENT') || notif.type === 'MENTION'" [img]="MessageCircleIcon" class="w-4 h-4 text-white"></lucide-angular>
+            <lucide-angular *ngIf="notif.type.includes('SHARE')" [img]="ShareIcon" class="w-4 h-4 text-white"></lucide-angular>
+            <lucide-angular *ngIf="!notif.type.includes('COMMENT') && !notif.type.includes('SHARE') && notif.type !== 'MENTION'" [img]="BellIcon" class="w-4 h-4 text-muted-foreground"></lucide-angular>
           </div>
-          <div>
-            <p class="text-sm font-medium text-foreground" [class.font-semibold]="!notif.read">{{ notif.title }}</p>
-            <p class="text-xs text-muted-foreground mt-1">{{ notif.message }}</p>
-            <p class="text-[10px] text-muted-foreground/60 mt-2 uppercase">{{ notif.createdAt | date:'short' }}</p>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-foreground leading-tight" [class.font-semibold]="!notif.read">{{ notif.title }}</p>
+            <p class="text-xs text-muted-foreground mt-1.5 leading-snug">{{ notif.message }}</p>
+            <p class="text-[10px] text-muted-foreground/50 mt-2 font-medium">{{ notif.createdAt | date:'short' }}</p>
           </div>
         </div>
       </div>
+
+      <div *ngIf="notifications().length > displayLimit()" class="p-2 flex justify-center border-b border-border/50">
+        <button (click)="loadMore()" class="text-xs font-medium text-primary hover:underline px-4 py-2">Load More</button>
+      </div>
+    </div>
+    
+    <div class="p-2 bg-muted/30 border-t border-border flex justify-center">
+      <button routerLink="/notifications" (click)="toggleDropdown()" class="text-xs font-medium text-foreground hover:text-primary transition-colors flex items-center gap-1">
+        View All Notifications
+      </button>
     </div>
   </div>
 </div>

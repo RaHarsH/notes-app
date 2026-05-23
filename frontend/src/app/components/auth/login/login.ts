@@ -3,14 +3,17 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../services/auth';
+import { LucideAngularModule, Eye, EyeOff } from 'lucide-angular';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LucideAngularModule],
   templateUrl: './login.html'
 })
 export class LoginComponent {
+  EyeIcon = Eye;
+  EyeOffIcon = EyeOff;
   authService = inject(AuthService);
   router = inject(Router);
 
@@ -18,6 +21,11 @@ export class LoginComponent {
   password = '';
   loading = signal(false);
   error = signal('');
+  showPassword = signal(false);
+
+  togglePasswordVisibility() {
+    this.showPassword.set(!this.showPassword());
+  }
 
   onSubmit() {
     if (!this.email || !this.password) {

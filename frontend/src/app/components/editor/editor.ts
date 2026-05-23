@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, effect, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, effect, signal, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
@@ -7,6 +7,7 @@ import { LucideAngularModule, MessageSquare } from 'lucide-angular';
 import { NotesService } from '../../services/notes';
 import { CollaborationService } from '../../services/collaboration';
 import { CommentsComponent } from './comments/comments';
+import getCaretCoordinates from 'textarea-caret'; // Types provided in typings.d.ts
 
 @Component({
   selector: 'app-editor',
@@ -15,6 +16,8 @@ import { CommentsComponent } from './comments/comments';
   templateUrl: './editor.html'
 })
 export class EditorComponent implements OnInit, OnDestroy {
+  @ViewChild('editorTextarea') editorTextarea!: ElementRef<HTMLTextAreaElement>;
+
   route = inject(ActivatedRoute);
   notesService = inject(NotesService);
   collabService = inject(CollaborationService);
@@ -23,6 +26,9 @@ export class EditorComponent implements OnInit, OnDestroy {
   loading = signal(true);
   saving = signal(false);
   isCommentsOpen = signal(false);
+
+  // For cursors
+  otherCursors = signal<{ userId: string; email?: string; top: number; left: number; color: string }[]>([]);
 
   MessageSquareIcon = MessageSquare;
 
@@ -69,6 +75,28 @@ export class EditorComponent implements OnInit, OnDestroy {
       if (changes && changes !== this.note()?.content) {
         // Simple overwrite for now, real OT/CRDT comes later
         this.notesService.activeNote.update(n => n ? { ...n, content: changes } : null);
+      }
+    });
+
+    // Update floating cursors
+    effect(() => {
+      const users = this.collabService.activeUsers();
+      if (this.editorTextarea?.nativeElement) {
+        const textarea = this.editorTextarea.nativeElement;
+        const cursors = users
+          .filter(u => u.cursor !== undefined)
+          .map((u, i) => {
+            const coords = getCaretCoordinates(textarea, u.cursor!.ch);
+            const colors = ['#eab308', '#ec4899', '#8b5cf6', '#14b8a6', '#f97316'];
+            return {
+              userId: u.userId,
+              email: u.email,
+              top: coords.top,
+              left: coords.left,
+              color: colors[i % colors.length]
+            };
+          });
+        this.otherCursors.set(cursors);
       }
     });
   }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Inject, Delete } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
@@ -49,5 +49,17 @@ export class CommentsController {
   @ApiOperation({ summary: 'Resolve a comment thread' })
   resolve(@Param('threadId') threadId: string, @CurrentUser() user: any) {
     return firstValueFrom(this.commentClient.send('comments.resolve', { threadId, userId: user.userId }));
+  }
+
+  @Patch('threads/:threadId')
+  @ApiOperation({ summary: 'Update a comment thread' })
+  update(@Param('threadId') threadId: string, @Body() dto: { content: string }, @CurrentUser() user: any) {
+    return firstValueFrom(this.commentClient.send('comments.update', { threadId, content: dto.content, userId: user.userId }));
+  }
+
+  @Delete('threads/:threadId')
+  @ApiOperation({ summary: 'Delete a comment thread' })
+  delete(@Param('threadId') threadId: string, @CurrentUser() user: any) {
+    return firstValueFrom(this.commentClient.send('comments.delete', { threadId, userId: user.userId }));
   }
 }

@@ -1,6 +1,6 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LucideAngularModule, Search, Plus, FileText, ChevronRight, LogOut, Trash2 } from 'lucide-angular';
 import { AuthService } from '../../../services/auth';
@@ -9,7 +9,7 @@ import { NotesService } from '../../../services/notes';
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule, FormsModule],
+  imports: [CommonModule, LucideAngularModule, FormsModule, RouterModule],
   templateUrl: './sidebar.html'
 })
 export class SidebarComponent implements OnInit {
@@ -56,13 +56,28 @@ export class SidebarComponent implements OnInit {
     this.router.navigate(['/note', id]);
   }
 
+  confirmModalOpen = signal(false);
+  pendingDeleteId = signal<string | null>(null);
+
   deleteNote(id: string, event: Event) {
     event.stopPropagation();
-    if (confirm('Are you sure you want to delete this note?')) {
+    this.pendingDeleteId.set(id);
+    this.confirmModalOpen.set(true);
+  }
+
+  cancelDelete() {
+    this.pendingDeleteId.set(null);
+    this.confirmModalOpen.set(false);
+  }
+
+  confirmDelete() {
+    const id = this.pendingDeleteId();
+    if (id) {
       this.notesService.deleteNote(id).subscribe(() => {
         if (this.activeNote()?.id === id) {
           this.router.navigate(['/dashboard']);
         }
+        this.cancelDelete();
       });
     }
   }

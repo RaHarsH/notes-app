@@ -1,4 +1,4 @@
-import { Controller, Get, Param, UseGuards, Inject } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { firstValueFrom } from 'rxjs';
@@ -20,8 +20,8 @@ export class UsersController {
 
   @Get('search')
   @ApiOperation({ summary: 'Search users by name or email' })
-  search(@CurrentUser() user: any) {
-    return firstValueFrom(this.userClient.send('users.search', { query: '' }));
+  search(@Query('query') query: string) {
+    return firstValueFrom(this.userClient.send('users.search', { query: query || '' }));
   }
 
   @Get(':id')

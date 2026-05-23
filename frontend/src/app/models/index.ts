@@ -30,6 +30,7 @@ export interface Comment {
   id: string;
   noteId: string;
   userId: string;
+  email?: string;
   content: string;
   position?: string;
   resolved: boolean;
@@ -39,6 +40,7 @@ export interface Comment {
 export interface Notification {
   id: string;
   userId: string;
+  sourceUserId?: string;
   type: string;
   title: string;
   message: string;

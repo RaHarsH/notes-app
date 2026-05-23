@@ -16,6 +16,7 @@ import { ConfigService } from '@nestjs/config';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
+  email?: string;
   activeNoteId?: string;
 }
 
@@ -54,7 +55,12 @@ export class CollaborationGateway
       });
 
       client.userId = payload.sub;
-      this.logger.log(`Client connected: ${client.id} (user: ${client.userId})`);
+      client.email = payload.email;
+      
+      // Join a personal room for direct notifications
+      client.join(`user:${client.userId}`);
+
+      this.logger.log(`Client connected: ${client.id} (user: ${client.userId}, email: ${client.email})`);
     } catch {
       this.logger.warn(`Unauthenticated connection rejected: ${client.id}`);
       client.disconnect();
@@ -67,6 +73,7 @@ export class CollaborationGateway
 
       client.to(`note:${client.activeNoteId}`).emit('collaborator-left', {
         userId: client.userId,
+        email: client.email,
         timestamp: new Date().toISOString(),
       });
     }
@@ -85,6 +92,7 @@ export class CollaborationGateway
 
     const presenceData = {
       userId: client.userId,
+      email: client.email,
       connectedAt: new Date().toISOString(),
       socketId: client.id,
     };

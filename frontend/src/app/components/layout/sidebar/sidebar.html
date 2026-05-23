@@ -1,12 +1,12 @@
 <aside 
-  class="flex-shrink-0 flex flex-col h-full bg-muted/30 border-r border-border transition-all duration-300 ease-in-out"
+  class="flex-shrink-0 flex flex-col h-full bg-card border-r border-border transition-all duration-300 ease-in-out"
   [class.w-64]="isOpen()"
   [class.w-0]="!isOpen()"
   [class.opacity-0]="!isOpen()">
   
   <div class="flex-1 overflow-y-auto px-3 py-4 w-64">
     <!-- Profile Area -->
-    <div class="flex items-center gap-3 px-2 py-3 mb-6 rounded-lg hover:bg-muted cursor-pointer transition-colors" *ngIf="user()">
+    <div routerLink="/profile" class="flex items-center gap-3 px-2 py-3 mb-6 rounded-lg hover:bg-muted cursor-pointer transition-colors" *ngIf="user()">
       <div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
         {{ user()?.displayName?.charAt(0) || user()?.email?.charAt(0) | uppercase }}
       </div>
@@ -18,14 +18,17 @@
 
     <!-- Action Buttons -->
     <div class="space-y-1 mb-6">
-      <div class="relative w-full">
-        <lucide-angular [img]="SearchIcon" class="w-4 h-4 absolute left-2 top-2.5 text-muted-foreground"></lucide-angular>
+      <div class="relative flex items-center">
+        <span class="flex justify-center items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="absolute left-2.5 top-2.5 text-muted-foreground"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg>
+
+        </span>
         <input 
           type="text" 
           [(ngModel)]="searchQuery"
           (ngModelChange)="searchQuery.set($event)"
           placeholder="Search notes..." 
-          class="w-full pl-8 pr-2 py-2 text-sm font-medium rounded-md bg-muted text-foreground border border-transparent focus:border-border focus:outline-none transition-colors"
+          class="w-full bg-background border border-border rounded-md pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground placeholder:text-muted-foreground"
         />
       </div>
       <button class="w-full flex items-center gap-3 px-2 py-2 text-sm font-medium rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition-colors group" (click)="createNewNote()">
@@ -78,3 +81,16 @@
     </button>
   </div>
 </aside>
+
+<!-- Delete Confirmation Modal -->
+<div *ngIf="confirmModalOpen()" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+  <div class="bg-card w-full max-w-sm rounded-xl border border-border shadow-2xl overflow-hidden p-6 text-center">
+    <lucide-angular [img]="Trash2Icon" class="w-12 h-12 text-red-500 mx-auto mb-4"></lucide-angular>
+    <h3 class="font-semibold text-lg text-foreground mb-2">Delete Note?</h3>
+    <p class="text-sm text-muted-foreground mb-6">Are you sure you want to delete this note? This action cannot be undone.</p>
+    <div class="flex gap-3 justify-center">
+      <button (click)="cancelDelete()" class="px-4 py-2 text-sm font-medium text-foreground bg-background border border-border rounded-md hover:bg-muted transition-colors flex-1">Cancel</button>
+      <button (click)="confirmDelete()" class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors flex-1">Delete</button>
+    </div>
+  </div>
+</div>

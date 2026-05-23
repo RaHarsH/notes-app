@@ -1,19 +1,36 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, map } from 'rxjs';
+import { Observable, tap, map, interval, switchMap, Subscription } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { Notification } from '../models';
+import { UsersService } from './users';
+import { CollaborationService } from './collaboration';
 
 @Injectable({
   providedIn: 'root'
 })
 export class NotificationsService {
   private readonly API_URL = `${environment.apiUrl}/notifications`;
+  private usersService = inject(UsersService);
   
   notifications = signal<Notification[]>([]);
   unreadCount = signal<number>(0);
+  private pollingSub?: Subscription;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private collabService: CollaborationService) {
+    this.startPolling();
+    this.collabService.globalNotifications.subscribe(() => {
+      // Fetch latest notifications immediately when a push event comes in
+      this.getNotifications().subscribe();
+    });
+  }
+
+  startPolling() {
+    this.getNotifications().subscribe();
+    this.pollingSub = interval(5000).pipe(
+      switchMap(() => this.getNotifications())
+    ).subscribe();
+  }
 
   getNotifications(): Observable<Notification[]> {
     return this.http.get<any[]>(this.API_URL).pipe(
@@ -21,35 +38,65 @@ export class NotificationsService {
       tap(notifs => {
         this.notifications.set(notifs);
         this.unreadCount.set(notifs.filter(n => !n.read).length);
+        
+        // Background fetch user details to replace ID with email
+        notifs.forEach(n => {
+          const uId = n.sourceUserId;
+          if (uId) {
+            this.usersService.getUserById(uId).subscribe(user => {
+              if (user && user.email) {
+                this.notifications.update(currentNotifs => 
+                  currentNotifs.map(cn => {
+                    if (cn.id === n.id) {
+                      const emailPrefix = user.email.split('@')[0];
+                      let newMessage = cn.message;
+                      // Replace the known "User X" placeholder with the actual email
+                      newMessage = newMessage.replace(`User ${uId.substring(0,4)}`, emailPrefix);
+                      newMessage = newMessage.replace(`user ${uId.substring(0,4)}`, emailPrefix);
+                      return { ...cn, message: newMessage };
+                    }
+                    return cn;
+                  })
+                );
+              }
+            });
+          }
+        });
       })
     );
   }
 
-  private formatNotification(n: any): Notification {
+  private formatNotification(n: any): Notification & { sourceUserId?: string } {
     let title = 'New Notification';
     let message = 'You have a new activity.';
     const p = n.payload || {};
+    let sourceUserId: string | undefined;
 
     switch (n.type) {
       case 'NOTE_SHARED':
         title = 'Note Shared';
-        message = `User ${p.ownerId?.substring(0,4)} shared note ${p.noteId?.substring(0,4)} with you.`;
+        sourceUserId = p.sourceUserId || p.ownerId;
+        message = `User ${sourceUserId?.substring(0,4) || 'unknown'} shared note ${p.noteId?.substring(0,4)} with you.`;
         break;
       case 'COMMENT_ADDED':
         title = 'New Comment';
-        message = `User ${p.authorId?.substring(0,4)} added a comment to note ${p.noteId?.substring(0,4)}.`;
+        sourceUserId = p.sourceUserId || p.authorId;
+        message = `User ${sourceUserId?.substring(0,4) || 'unknown'} added a comment to note ${p.noteId?.substring(0,4)}.`;
         break;
       case 'MENTION':
         title = 'You were Mentioned';
-        message = `User ${p.authorId?.substring(0,4)} mentioned you in a comment.`;
+        sourceUserId = p.sourceUserId || p.authorId;
+        message = `User ${sourceUserId?.substring(0,4) || 'unknown'} mentioned you in a comment.`;
         break;
       case 'COMMENT_RESOLVED':
         title = 'Comment Resolved';
+        sourceUserId = p.sourceUserId || p.resolvedById;
         message = `A comment thread in note ${p.noteId?.substring(0,4)} was resolved.`;
         break;
       case 'NOTE_UPDATED':
         title = 'Note Updated';
-        message = `Note ${p.noteId?.substring(0,4)} was updated by user ${p.authorId?.substring(0,4)}.`;
+        sourceUserId = p.sourceUserId || p.authorId;
+        message = `Note ${p.noteId?.substring(0,4)} was updated by user ${sourceUserId?.substring(0,4) || 'unknown'}.`;
         break;
     }
 
@@ -60,8 +107,9 @@ export class NotificationsService {
       title,
       message,
       read: n.read,
-      createdAt: n.createdAt
-    };
+      createdAt: n.createdAt,
+      sourceUserId
+    } as Notification & { sourceUserId?: string };
   }
 
   markAsRead(id: string): Observable<any> {

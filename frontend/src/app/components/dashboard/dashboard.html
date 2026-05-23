@@ -1,6 +1,6 @@
 <div class="flex h-screen w-full bg-background text-foreground overflow-hidden">
   
-  <app-sidebar class="h-full z-20"></app-sidebar>
+  <app-sidebar *ngIf="layoutService.isSidebarOpen()" class="h-full z-20 w-64 flex-shrink-0 transition-all duration-300"></app-sidebar>
 
   <main class="flex-1 flex flex-col h-full min-w-0 bg-background relative z-10 transition-colors duration-300">
     <app-header class="sticky top-0 z-20"></app-header>

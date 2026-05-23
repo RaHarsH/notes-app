@@ -1,8 +1,9 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SidebarComponent } from '../layout/sidebar/sidebar';
 import { HeaderComponent } from '../layout/header/header';
+import { LayoutService } from '../../services/layout';
 
 @Component({
   selector: 'app-dashboard',
@@ -11,4 +12,5 @@ import { HeaderComponent } from '../layout/header/header';
   templateUrl: './dashboard.html'
 })
 export class DashboardComponent {
+  layoutService = inject(LayoutService);
 }

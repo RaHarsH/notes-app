@@ -1,43 +1,79 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { io, Socket } from 'socket.io-client';
 import { environment } from '../../environments/environment';
 import { AuthService } from './auth';
+import { UsersService } from './users';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root'
 })
 export class CollaborationService {
   private socket!: Socket;
+  private usersService = inject(UsersService);
   
   // Real-time state
-  activeUsers = signal<{ userId: string; cursor?: { line: number; ch: number } }[]>([]);
+  activeUsers = signal<{ userId: string; email?: string; cursor?: { line: number; ch: number } }[]>([]);
   documentChanges = signal<any>(null);
+  
+  // Real-time events
+  globalNotifications = new Subject<any>();
+  commentUpdates = new Subject<any>();
 
-  constructor(private authService: AuthService) {}
+  constructor(private authService: AuthService) {
+    this.initGlobalConnection();
+  }
 
-  connect(noteId: string) {
+  initGlobalConnection() {
     const token = this.authService.getToken();
     if (!token) return;
 
-    this.socket = io(environment.wsUrl + '/collab', {
-      auth: { token },
-      transports: ['websocket']
+    if (!this.socket) {
+      this.socket = io(environment.wsUrl + '/collab', {
+        auth: { token },
+        transports: ['websocket']
+      });
+
+      this.socket.on('notification', (data) => {
+        this.globalNotifications.next(data);
+      });
+
+      this.socket.on('comment-updated', (data) => {
+        this.commentUpdates.next(data);
+      });
+    }
+  }
+
+  connect(noteId: string) {
+    this.initGlobalConnection();
+
+    if (this.socket.connected) {
+      this.joinNoteRoom(noteId);
+    } else {
+      this.socket.on('connect', () => {
+        console.log('Connected to collaboration service');
+        this.joinNoteRoom(noteId);
+      });
+    }
+  }
+
+  private joinNoteRoom(noteId: string) {
+    this.socket.emit('join-note', { noteId }, (response: any) => {
+      if (response && response.collaborators) {
+        response.collaborators.forEach((c: any) => this.addUserPresence(c.userId));
+      }
+      if (response && response.docState) {
+        this.documentChanges.set(response.docState);
+      }
     });
 
-    this.socket.on('connect', () => {
-      console.log('Connected to collaboration service');
-      this.socket.emit('join-note', { noteId }, (response: any) => {
-        if (response && response.collaborators) {
-          this.activeUsers.set(response.collaborators.map((c: any) => ({ userId: c.userId })));
-        }
-        if (response && response.docState) {
-          this.documentChanges.set(response.docState);
-        }
-      });
-    });
+    // Remove existing listeners to avoid duplicates if re-connecting
+    this.socket.off('doc-synced');
+    this.socket.off('cursor-moved');
+    this.socket.off('collaborator-joined');
+    this.socket.off('collaborator-left');
 
     this.socket.on('doc-synced', (data: { content: string; authorId: string; timestamp: string }) => {
-      // Received a document update from someone else
       this.documentChanges.set(data.content);
     });
 
@@ -48,17 +84,32 @@ export class CollaborationService {
           existing.cursor = data.position;
           return [...users];
         } else {
+          this.addUserPresence(data.userId);
           return [...users, { userId: data.userId, cursor: data.position }];
         }
       });
     });
 
     this.socket.on('collaborator-joined', (data: { userId: string }) => {
-      this.activeUsers.update(users => [...users.filter(u => u.userId !== data.userId), { userId: data.userId }]);
+      this.addUserPresence(data.userId);
     });
 
     this.socket.on('collaborator-left', (data: { userId: string }) => {
       this.activeUsers.update(users => users.filter(u => u.userId !== data.userId));
+    });
+  }
+
+  private addUserPresence(userId: string) {
+    this.activeUsers.update(users => {
+      if (users.some(u => u.userId === userId)) return users;
+      return [...users, { userId }];
+    });
+    this.usersService.getUserById(userId).subscribe({
+      next: (user) => {
+        this.activeUsers.update(users => 
+          users.map(u => u.userId === userId ? { ...u, email: user.email } : u)
+        );
+      }
     });
   }
 
@@ -77,6 +128,7 @@ export class CollaborationService {
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();
+      (this.socket as any) = undefined;
     }
     this.activeUsers.set([]);
     this.documentChanges.set(null);

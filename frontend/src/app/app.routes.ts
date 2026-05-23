@@ -12,7 +12,9 @@ export const routes: Routes = [
     component: DashboardComponent,
     canActivate: [authGuard],
     children: [
-      { path: 'note/:id', loadComponent: () => import('./components/editor/editor').then(m => m.EditorComponent) }
+      { path: 'note/:id', loadComponent: () => import('./components/editor/editor').then(m => m.EditorComponent) },
+      { path: 'profile', loadComponent: () => import('./pages/profile/profile').then(m => m.ProfileComponent) },
+      { path: 'notifications', loadComponent: () => import('./pages/notifications/notifications-page').then(m => m.NotificationsPageComponent) }
     ]
   },
   { path: '**', redirectTo: '' }

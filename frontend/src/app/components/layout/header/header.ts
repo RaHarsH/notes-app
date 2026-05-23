@@ -6,6 +6,8 @@ import { AuthService } from '../../../services/auth';
 import { NotesService } from '../../../services/notes';
 import { CollaborationService } from '../../../services/collaboration';
 import { NotificationsComponent } from '../notifications/notifications';
+import { UsersService } from '../../../services/users';
+import { LayoutService } from '../../../services/layout';
 
 @Component({
   selector: 'app-header',
@@ -21,6 +23,7 @@ export class HeaderComponent implements OnInit {
   user = this.authService.user;
   activeNote = this.notesService.activeNote;
   activeUsers = this.collabService.activeUsers;
+  layoutService = inject(LayoutService);
   
   isDarkMode = signal(true);
 
@@ -34,19 +37,33 @@ export class HeaderComponent implements OnInit {
   isShareModalOpen = signal(false);
   shareUserId = '';
   sharePermission: 'VIEWER' | 'EDITOR' = 'VIEWER';
+  shareType = signal<'email' | 'id'>('email');
 
   ngOnInit() {
-    this.isDarkMode.set(document.documentElement.classList.contains('dark'));
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+      this.isDarkMode.set(true);
+    } else if (savedTheme === 'light') {
+      document.documentElement.classList.remove('dark');
+      this.isDarkMode.set(false);
+    } else {
+      this.isDarkMode.set(document.documentElement.classList.contains('dark'));
+    }
   }
 
   toggleTheme() {
     this.isDarkMode.set(!this.isDarkMode());
     if (this.isDarkMode()) {
       document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
     }
   }
+
+  usersService = inject(UsersService);
 
   openShareModal() {
     if (!this.activeNote()) return;
@@ -59,18 +76,46 @@ export class HeaderComponent implements OnInit {
     this.sharePermission = 'VIEWER';
   }
 
+  shareStatus = signal<{ type: 'success' | 'error', message: string } | null>(null);
+
+  closeShareStatus() {
+    this.shareStatus.set(null);
+  }
+
   shareNote() {
     const note = this.activeNote();
-    if (!note || !this.shareUserId.trim()) return;
+    const query = this.shareUserId.trim();
+    if (!note || !query) return;
 
-    this.notesService.shareNote(note.id, this.shareUserId.trim(), this.sharePermission).subscribe({
-      next: () => {
-        this.closeShareModal();
-        alert('Note shared successfully!');
+    // Search user by email or ID
+    this.usersService.searchUsers(query).subscribe({
+      next: (users) => {
+        let targetUser = users.find(u => u.email === query || u.id === query);
+        
+        if (!targetUser && users.length > 0) {
+           targetUser = users[0];
+        }
+
+        if (targetUser) {
+          this.notesService.shareNote(note.id, targetUser.id, this.sharePermission).subscribe({
+            next: () => {
+              this.closeShareModal();
+              this.shareStatus.set({ type: 'success', message: `Note shared successfully with ${targetUser.email}!` });
+            },
+            error: (err) => {
+              this.closeShareModal();
+              this.shareStatus.set({ type: 'error', message: err.error?.message || 'Failed to share note. User might not exist.' });
+              console.error(err);
+            }
+          });
+        } else {
+          this.closeShareModal();
+          this.shareStatus.set({ type: 'error', message: 'User not found. Please enter a valid email or user ID.' });
+        }
       },
-      error: (err) => {
-        alert('Failed to share note. User might not exist.');
-        console.error(err);
+      error: () => {
+        this.closeShareModal();
+        this.shareStatus.set({ type: 'error', message: 'Error searching for user.' });
       }
     });
   }

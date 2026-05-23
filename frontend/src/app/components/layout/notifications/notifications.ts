@@ -4,10 +4,12 @@ import { LucideAngularModule, Bell, MessageCircle, Share } from 'lucide-angular'
 import { NotificationsService } from '../../../services/notifications';
 import { Notification } from '../../../models';
 
+import { RouterModule } from '@angular/router';
+
 @Component({
   selector: 'app-notifications',
   standalone: true,
-  imports: [CommonModule, LucideAngularModule],
+  imports: [CommonModule, RouterModule, LucideAngularModule],
   templateUrl: './notifications.html'
 })
 export class NotificationsComponent implements OnInit {
@@ -17,6 +19,7 @@ export class NotificationsComponent implements OnInit {
   unreadCount = this.notificationsService.unreadCount;
   
   isOpen = signal(false);
+  displayLimit = signal(5);
 
   // Icons
   BellIcon = Bell;
@@ -29,6 +32,17 @@ export class NotificationsComponent implements OnInit {
 
   toggleDropdown() {
     this.isOpen.set(!this.isOpen());
+    if (this.isOpen()) {
+      this.displayLimit.set(5);
+    }
+  }
+
+  loadMore() {
+    this.displayLimit.update(v => v + 5);
+  }
+
+  displayNotifications() {
+    return this.notifications().slice(0, this.displayLimit());
   }
 
   markAllAsRead() {

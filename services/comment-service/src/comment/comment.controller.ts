@@ -25,4 +25,14 @@ export class CommentController {
   resolve(@Payload() data: any) {
     return this.commentService.resolve(data);
   }
+
+  @MessagePattern('comments.update')
+  update(@Payload() data: any) {
+    return this.commentService.updateThread(data);
+  }
+
+  @MessagePattern('comments.delete')
+  delete(@Payload() data: any) {
+    return this.commentService.deleteThread(data);
+  }
 }

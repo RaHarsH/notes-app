@@ -1,0 +1,54 @@
+<div class="max-w-4xl mx-auto px-4 py-12 sm:px-6 lg:px-8">
+  <div class="bg-card shadow rounded-lg border border-border overflow-hidden">
+    <div class="px-4 py-5 sm:px-6 border-b border-border bg-muted/30">
+      <h3 class="text-lg leading-6 font-medium text-foreground">User Profile</h3>
+      <p class="mt-1 max-w-2xl text-sm text-muted-foreground">Personal details and account settings.</p>
+    </div>
+    
+    @if (currentUser(); as user) {
+      <div class="px-4 py-5 sm:p-0">
+        <dl class="sm:divide-y sm:divide-border">
+          
+          <!-- Display Name -->
+          <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-muted/10 transition-colors">
+            <dt class="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <lucide-angular [img]="UserIcon" class="w-4 h-4"></lucide-angular>
+              Display Name
+            </dt>
+            <dd class="mt-1 text-sm text-foreground sm:mt-0 sm:col-span-2 font-semibold">
+              {{ user.displayName || 'Not provided' }}
+            </dd>
+          </div>
+          
+          <!-- Email -->
+          <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-muted/10 transition-colors">
+            <dt class="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <lucide-angular [img]="MailIcon" class="w-4 h-4"></lucide-angular>
+              Email Address
+            </dt>
+            <dd class="mt-1 text-sm text-foreground sm:mt-0 sm:col-span-2">
+              {{ user.email }}
+            </dd>
+          </div>
+          
+          <!-- User ID -->
+          <div class="py-4 sm:py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 hover:bg-muted/10 transition-colors">
+            <dt class="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <lucide-angular [img]="KeyIcon" class="w-4 h-4"></lucide-angular>
+              User ID
+            </dt>
+            <dd class="mt-1 text-sm text-muted-foreground sm:mt-0 sm:col-span-2 font-mono bg-muted px-2 py-1 rounded w-max">
+              {{ user.id }}
+            </dd>
+          </div>
+          
+        </dl>
+      </div>
+    } @else {
+      <!-- Loading State -->
+      <div class="p-8 flex justify-center items-center">
+        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }
+  </div>
+</div>
